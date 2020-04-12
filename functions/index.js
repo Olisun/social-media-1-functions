@@ -36,7 +36,7 @@ app.post('/posts', (request, response) => {
   const newPost = {
     body: request.body.body,
     userHandle: request.body.userHandle,
-    createdAt: admin.firestore.Timestamp.fromDate(new Date())
+    createdAt: new Date().toISOString()
   };
   admin
     .firestore()
