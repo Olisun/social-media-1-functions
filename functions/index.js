@@ -23,10 +23,12 @@ const firebaseConfig = {
 const firebase = require('firebase');
 firebase.initializeApp(firebaseConfig);
 
+const database = admin.firestore();
+
 // route for getting all posts.
 app.get('/posts', (request, response) => {
   // cors(request, response, () => {
-  admin
+  database
     .firestore()
     .collection('posts')
     .orderBy('createdAt', 'desc')
@@ -55,28 +57,24 @@ app.post('/posts', (request, response) => {
     userHandle: request.body.userHandle,
     createdAt: new Date().toISOString()
   };
-  admin
+  database
     .firestore()
     .collection('posts')
     .add(newPost)
     .then(doc => {
-      response.json({
-        message: `document ${doc.id} created successfully`
-      });
+      response.json({ message: `document ${doc.id} created successfully` });
       return response.json(newPost);
     })
     .catch(error => {
-      response.status(500).json({
-        error: 'Oops - something went wrong!'
-      });
+      response.status(500).json({ error: 'Oops - something went wrong!' });
       console.log(error);
     })
   // });
 });
 
-// route for signing up. 
+// route for signing up new user.
 app.post('/signup', (request, response) => {
-  // extracting data from the signup form. 
+  // extracting data from the signup form and creating a nwe user in firebase auth.
   const newUser = {
     email: request.body.email,
     password: request.body.password,
@@ -84,18 +82,30 @@ app.post('/signup', (request, response) => {
     handle: request.body.handle,
   }
   // TODO: validate user data
-  firebase.auth().createUserWithEmailAndPassword(newUser.email, newUser.password)
+  // when creating a new user and the new user chooses a handle that is already in the DB, show the message.  Else, create the new user.
+  database
+    .doc(`/users/${newUser.handle}`)
+    .get()
+    .then(doc => {
+      if (doc.exists) {
+        return response.status(400).json({ handle: 'this handle is already taken' });
+      } else {
+        return firebase
+          .auth()
+          .createUserWithEmailAndPassword(newUser.email, newUser.password)
+      }
+    })
+    // returning the authentication token to the user so the user will later use to request more data. 
     .then(data => {
-      return response.status(201).json({
-        message: `user ${data.user.uid} sdignerd up successfully`
-      });
+      return data.user.getIdToken();
+    })
+    .then(token => {
+      return response.status(201).json({ token });
     })
     .catch(error => {
       console.error(error);
-      return response.status(500).json({
-        error: error.code
-      });
-    });
+      return response.status(500).json({ error: error.code });
+    })
 });
 
 // passing the app into the function so it turns into multiple routes.

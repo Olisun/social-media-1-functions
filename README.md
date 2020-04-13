@@ -1,1 +1,1 @@
-# social-media-1-functions
+# Firebase backend and functions for a social media app to be built with React.
