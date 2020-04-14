@@ -72,6 +72,25 @@ app.post('/posts', (request, response) => {
   // });
 });
 
+// Helper function for determining an empty string. 
+const isEmpty = string => {
+  if (string.trim() === '') {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+// Helper function to check if an email is a valid email. 
+const isEmail = email => {
+  const regEx = RegExp(/^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/);
+  if (email.match(regEx)) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
 // route for signing up new user.
 app.post('/signup', (request, response) => {
   // extracting data from the signup form and creating a nwe user in firebase auth.
@@ -81,9 +100,35 @@ app.post('/signup', (request, response) => {
     confirmPassword: request.body.confirmPassword,
     handle: request.body.handle,
   }
-  // TODO: validate user data
-  // Function for creating and validating a new user.
-  // when creating a new user and the new user chooses a handle that is already in the DB, show the error message below.  Else, create the new user.
+  // Validating email and password. 
+  // Creating an errors object to store any validation errors. 
+  let errors = {};
+
+  // Applying the isEmpty helper function. 
+  if (isEmpty(newUser.email)) {
+    errors.email = 'Please enter your email'
+  } else if (!isEmail(newUser.email)) {
+    errors.email = 'Must be a valid email address'
+  }
+
+  if (isEmpty(newUser.password)) {
+    errors.password = 'Please enter a password'
+  }
+
+  if (newUser.password !== newUser.confirmPassword) {
+    errors.confirmPassword = 'Passwords don not match'
+  }
+
+  if (isEmpty(newUser.handle)) {
+    errors.handle = 'Please enter a handle'
+  }
+
+  // Checking to see if there are any errors in the errors object above. 
+  if (Object.keys(errors).length > 0) {
+    return response.status(400).json(errors);
+  }
+
+  // This function checks to see if a new user selects an email already in the DB.  If so, display the error message.  Else, create the new user.
   // Declaring token and userId variables. 
   let token, userId;
   database
