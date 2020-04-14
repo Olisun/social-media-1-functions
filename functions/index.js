@@ -82,7 +82,10 @@ app.post('/signup', (request, response) => {
     handle: request.body.handle,
   }
   // TODO: validate user data
-  // when creating a new user and the new user chooses a handle that is already in the DB, show the message.  Else, create the new user.
+  // Function for creating and validating a new user.
+  // when creating a new user and the new user chooses a handle that is already in the DB, show the error message below.  Else, create the new user.
+  // Declaring token and userId variables. 
+  let token, userId;
   database
     .doc(`/users/${newUser.handle}`)
     .get()
@@ -97,14 +100,31 @@ app.post('/signup', (request, response) => {
     })
     // returning the authentication token to the user so the user will later use to request more data. 
     .then(data => {
+      userId = data.user.uid;
       return data.user.getIdToken();
     })
-    .then(token => {
+    // creating userCredentials for the document in the firebase DB. 
+    .then(idToken => {
+      token = idToken;
+      const userCredentials = {
+        handle: newUser.handle,
+        email: newUser.email,
+        createdAt: new Date().toISOString(),
+        userId // no need for pair because it was defined above.
+      }
+      // Creating a new user by sending these credentials into a document in the collection in the firebase DB.  
+      return database.doc(`/users/${newUser.handle}`).set(userCredentials);
+    })
+    .then(() => {
       return response.status(201).json({ token });
     })
     .catch(error => {
       console.error(error);
-      return response.status(500).json({ error: error.code });
+      if (error.code === 'auth/email-already-in-use') {
+        return response.status(400).json({ email: 'This email is taken' });
+      } else {
+        return response.status(500).json({ error: error.code });
+      }
     })
 });
 
