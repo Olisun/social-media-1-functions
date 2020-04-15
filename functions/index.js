@@ -56,6 +56,8 @@ app.post('/posts', (request, response) => {
     userHandle: request.body.userHandle,
     createdAt: new Date().toISOString()
   };
+  // TODO: write code to check that the user is logged in order to post.
+  // TODO: write code to include the token in the header ({ Authorization: Bearer{token} })
   return database
     .collection('posts')
     .add(newPost)
@@ -200,7 +202,11 @@ app.post('/login', (request, response) => {
     })
     .catch(error => {
       console.error(error);
-      return response.status(500).json({ error: error.code })
+      if (error.code === 'auth/wrong-password') {
+        return response.status(403).json({ general: 'Wrong password' });
+      } else {
+        return response.status(500).json({ error: error.code })
+      }
     });
 });
 
