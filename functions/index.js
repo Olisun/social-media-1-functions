@@ -28,8 +28,7 @@ const database = admin.firestore();
 // route for getting all posts.
 app.get('/posts', (request, response) => {
   // cors(request, response, () => {
-  database
-    .firestore()
+  return database
     .collection('posts')
     .orderBy('createdAt', 'desc')
     .get()
@@ -57,8 +56,7 @@ app.post('/posts', (request, response) => {
     userHandle: request.body.userHandle,
     createdAt: new Date().toISOString()
   };
-  database
-    .firestore()
+  return database
     .collection('posts')
     .add(newPost)
     .then(doc => {
@@ -99,7 +97,7 @@ app.post('/signup', (request, response) => {
     password: request.body.password,
     confirmPassword: request.body.confirmPassword,
     handle: request.body.handle,
-  }
+  };
   // Validating email and password. 
   // Creating an errors object to store any validation errors. 
   let errors = {};
@@ -131,7 +129,7 @@ app.post('/signup', (request, response) => {
   // This function checks to see if a new user selects an email already in the DB.  If so, display the error message.  Else, create the new user.
   // Declaring token and userId variables. 
   let token, userId;
-  database
+  return database
     .doc(`/users/${newUser.handle}`)
     .get()
     .then(doc => {
@@ -173,5 +171,39 @@ app.post('/signup', (request, response) => {
     })
 });
 
+// Route for Logging in. 
+app.post('/login', (request, response) => {
+  const user = {
+    email: request.body.email,
+    password: request.body.password
+  };
+  // login validations.  Same methods as signup validations. 
+  let errors = {};
+
+  if (isEmpty(user.email)) {
+    errors.email = 'Please enter your email'
+  }
+
+  if (isEmpty(user.password)) {
+    errors.password = 'Please enter your password'
+  }
+
+  if (Object.keys(errors).length > 0) {
+    return response.status(400).json(errors);
+  }
+  return firebase.auth().signInWithEmailAndPassword(user.email, user.password)
+    .then(data => {
+      return data.user.getIdToken();
+    })
+    .then(token => {
+      return response.json({ token })
+    })
+    .catch(error => {
+      console.error(error);
+      return response.status(500).json({ error: error.code })
+    });
+});
+
 // passing the app into the function so it turns into multiple routes.
 exports.api = functions.https.onRequest(app);
+
