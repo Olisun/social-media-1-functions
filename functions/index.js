@@ -1,11 +1,11 @@
 const cors = require('cors')({ origin: true });
 const functions = require('firebase-functions');
-const admin = require('firebase-admin');
-
-admin.initializeApp();
 
 // initializing express and calling it on the same line..
 const app = require('express')();
+
+// importing the posts handler functions. 
+const { getAllPosts } = require('./handlers/posts');
 
 // firebase config for authentication.
 const firebaseConfig = {
@@ -23,32 +23,12 @@ const firebaseConfig = {
 const firebase = require('firebase');
 firebase.initializeApp(firebaseConfig);
 
-const database = admin.firestore();
 
-// route for getting all posts.
-app.get('/posts', (request, response) => {
-  // cors(request, response, () => {
-  return database
-    .collection('posts')
-    .orderBy('createdAt', 'desc')
-    .get()
-    .then(data => {
-      let posts = [];
-      data.forEach(doc => {
-        posts.push({
-          postId: doc.id,
-          body: doc.data().body,
-          userHandle: doc.data().userHandle,
-          createdAt: doc.data().createdAt
-        });
-      });
-      return response.json(posts);
-    })
-    .catch(error => console.error(error));
-  // });
-})
+// Routes for posts using handler functions. 
+app.get('/posts', getAllPosts);
+app.post('/posts', FBAuth, createPost);
 
-// Middleware helper function to intercept the post route and checks for auth token. 
+// Middleware helper function to intercept the post route and checks for auth token.  This also links the post to the user who created it.  
 const FBAuth = (request, response, next) => {
   let idToken;
   if (request.headers.authorization && request.headers.authorization.startsWith('Bearer ')) {
@@ -59,7 +39,9 @@ const FBAuth = (request, response, next) => {
     return response.status(403).json({ error: 'Unauthorized' });
   }
   // Verifying the token is a token issued by this app and then adding that data to the request. 
-  return admin.auth().verifyIdToken(idToken)
+  return admin
+    .auth()
+    .verifyIdToken(idToken)
     .then(decodedToken => {
       request.user = decodedToken;
       console.log(decodedToken);
@@ -80,30 +62,6 @@ const FBAuth = (request, response, next) => {
       return response.status(400).json(error);
     })
 }
-
-// route for submitting a post.
-app.post('/posts', FBAuth, (request, response) => {
-  // cors(request, response, () => {
-  const newPost = {
-    body: request.body.body,
-    userHandle: request.user.handle,
-    createdAt: new Date().toISOString()
-  };
-  // TODO: write code to check that the user is logged in order to post.
-  // TODO: write code to include the token in the header ({ Authorization: Bearer{token} })
-  return database
-    .collection('posts')
-    .add(newPost)
-    .then(doc => {
-      response.json({ message: `document ${doc.id} created successfully` });
-      return response.json(newPost);
-    })
-    .catch(error => {
-      response.status(500).json({ error: 'Oops - something went wrong!' });
-      console.log(error);
-    })
-  // });
-});
 
 // Helper function for determining an empty string. 
 const isEmpty = string => {
@@ -191,7 +149,9 @@ app.post('/signup', (request, response) => {
         userId // no need for pair because it was defined above.
       }
       // Creating a new user by sending these credentials into a document in the collection in the firebase DB.  
-      return database.doc(`/users/${newUser.handle}`).set(userCredentials);
+      return database
+        .doc(`/users/${newUser.handle}`)
+        .set(userCredentials);
     })
     .then(() => {
       return response.status(201).json({ token });
@@ -226,7 +186,9 @@ app.post('/login', (request, response) => {
   if (Object.keys(errors).length > 0) {
     return response.status(400).json(errors);
   }
-  return firebase.auth().signInWithEmailAndPassword(user.email, user.password)
+  return firebase
+    .auth()
+    .signInWithEmailAndPassword(user.email, user.password)
     .then(data => {
       return data.user.getIdToken();
     })
