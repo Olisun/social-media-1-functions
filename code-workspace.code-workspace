@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "Practice",
+		"git.ignoreLimitWarning": true,
+		"html.format.indentHandlebars": true,
+		"editor.defaultFormatter": "vscode.configuration-editing"
+	}
+}
