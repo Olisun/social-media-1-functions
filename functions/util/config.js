@@ -1,5 +1,5 @@
 // firebase config for authentication.
-nodule.exports = {
+module.exports = {
   apiKey: "AIzaSyD1eLFpyIA55kILq-Gieac0wFYe16f366A",
   authDomain: "social-media-1-8a263.firebaseapp.com",
   databaseURL: "https://social-media-1-8a263.firebaseio.com",

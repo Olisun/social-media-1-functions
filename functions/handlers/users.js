@@ -16,6 +16,11 @@ exports.signup = (request, response) => {
     handle: request.body.handle,
   };
 
+  const { valid, errors } = validateSignupData(newUser);
+
+  if (!valid) {
+    return response.status(400).json(errors);
+  }
 
   // This function checks to see if a new user selects an email already in the DB.  If so, display the error message.  Else, create the new user.
   // Declaring token and userId variables. 
@@ -70,20 +75,13 @@ exports.login = (request, response) => {
     email: request.body.email,
     password: request.body.password
   };
-  // login validations.  Same methods as signup validations. 
-  let errors = {};
 
-  if (isEmpty(user.email)) {
-    errors.email = 'Please enter your email'
-  }
+  const { valid, errors } = validateLoginData(user);
 
-  if (isEmpty(user.password)) {
-    errors.password = 'Please enter your password'
-  }
-
-  if (Object.keys(errors).length > 0) {
+  if (!valid) {
     return response.status(400).json(errors);
   }
+
   return firebase
     .auth()
     .signInWithEmailAndPassword(user.email, user.password)
@@ -102,3 +100,4 @@ exports.login = (request, response) => {
       }
     });
 }
+

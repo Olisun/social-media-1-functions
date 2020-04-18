@@ -1,4 +1,4 @@
-const { admin } = require('./admin');
+const { admin, database } = require('./admin');
 
 // Middleware helper function to intercept the post route and checks for auth token.  This also links the post to the user who created it.  
 module.exports = (request, response, next) => {

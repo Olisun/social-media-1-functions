@@ -47,3 +47,20 @@ exports.validateSignupData = (data) => {
   }
 }
 
+exports.validateLoginData = data => {
+  // login validations.  Same methods as signup validations. 
+  let errors = {};
+
+  if (isEmpty(user.email)) {
+    errors.email = 'Please enter your email'
+  }
+
+  if (isEmpty(user.password)) {
+    errors.password = 'Please enter your password'
+  }
+
+  return {
+    errors,
+    valid: Object.keys(errors).length === 0 ? true : false
+  }
+}
