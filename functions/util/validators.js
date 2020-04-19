@@ -52,11 +52,11 @@ exports.validateLoginData = data => {
   let errors = {};
 
   if (isEmpty(user.email)) {
-    errors.email = 'Please enter your email'
+    data.email = 'Please enter your email'
   }
 
   if (isEmpty(user.password)) {
-    errors.password = 'Please enter your password'
+    data.password = 'Please enter your password'
   }
 
   return {

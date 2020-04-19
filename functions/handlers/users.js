@@ -1,4 +1,4 @@
-const { database } = require('../util/admin');
+const { admin, database } = require('../util/admin');
 const config = require('../util/config');
 
 const firebase = require('firebase');
@@ -21,6 +21,9 @@ exports.signup = (request, response) => {
   if (!valid) {
     return response.status(400).json(errors);
   }
+
+  // Emoji placeholder for image.
+  const noImg = 'no-img.png';
 
   // This function checks to see if a new user selects an email already in the DB.  If so, display the error message.  Else, create the new user.
   // Declaring token and userId variables. 
@@ -49,6 +52,7 @@ exports.signup = (request, response) => {
         handle: newUser.handle,
         email: newUser.email,
         createdAt: new Date().toISOString(),
+        imgUrl: `https://firebasestorage.googleapis.com/v0/b/${config.storageBucket}/o/${noImg}?alt=media`,
         userId // no need for pair because it was defined above.
       }
       // Creating a new user by sending these credentials into a document in the collection in the firebase DB.  
@@ -99,5 +103,66 @@ exports.login = (request, response) => {
         return response.status(500).json({ error: error.code })
       }
     });
+}
+
+// upload image route function. 
+exports.uploadImage = (request, response) => {
+  // importing packages (BusBoy installed.  Others default.)
+  const BusBoy = require('busboy');
+  const path = require('path');
+  const os = require('os');
+  const fs = require('fs');
+
+  const busboy = new BusBoy({ headers: request.headers });
+
+  // Declaring variables. 
+  let imageFileName;
+  let imageToBeUploaded = {};
+
+  busboy.on('file', (fieldname, file, filename, encoding, mimetype) => {
+    console.log(fieldname);
+    console.log(filename);
+    console.log(mimetype);
+    // Extracting the filename (.png for example).
+    // The array part gives us the index of the last item. 
+    const imageExtention = filename.split('.')[filename.split('.').length - 1];
+    // Creating a random file name.  example output (555555.png)
+    imageFileName = `${Math.round(Math.random() * 100000)}.${imageExtention}`;
+    // Getting the file path. 
+    const filepath = path.join(os.tmpdir(), imageFileName);
+    // Creating image to be uploaded. 
+    imageToBeUploaded = { filepath, mimetype };
+    // Using fs lib to create the file.
+    file.pipe(fs.createWriteStream(filepath));
+  });
+  busboy.on('finish', () => {
+    // From firebase SDK docs per tut.  
+    return admin
+      .storage()
+      .bucket()
+      .upload(imageToBeUploaded.filepath, {
+        resumable: false,
+        metadata: {
+          metadata: {
+            contentType: imageToBeUploaded.mimetype
+          }
+        }
+      })
+      // Adding the image URL to the user. 
+      .then(() => {
+        const imageUrl = `https://firebasestorage.googleapis.com/v0/b/${config.storageBucket}/o/${imageFileName}?alt=media`;
+        // Accessing the database and getting the user with their handle.  Then updating their profile with the image.  
+        return database
+          .doc(`/users/${request.user.handle}`)
+          .update({ imageUrl });
+      })
+      .then(() => {
+        return response.json({ message: 'Image uploaded successfully' });
+      })
+      .catch(error => {
+        console.error(error);
+        return response.status(500).json({ error: error.code });
+      })
+  })
 }
 

@@ -9,7 +9,7 @@ const FBAuth = require('./util/fbAuth');
 
 // importing the posts handler functions. 
 const { getAllPosts, createPost } = require('./handlers/posts');
-const { signup, login } = require('./handlers/users');
+const { signup, login, uploadImage } = require('./handlers/users');
 
 // Routes for posts using handler functions. 
 app.get('/posts', getAllPosts);
@@ -18,6 +18,7 @@ app.post('/posts', FBAuth, createPost);
 // Routes for users with the help of handler functions. 
 app.post('/signup', signup);
 app.post('/login', login);
+app.post('/user/image', FBAuth, uploadImage);
 
 
 // passing the app into the function so it turns into multiple routes.
