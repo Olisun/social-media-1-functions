@@ -51,12 +51,12 @@ exports.validateLoginData = data => {
   // login validations.  Same methods as signup validations. 
   let errors = {};
 
-  if (isEmpty(user.email)) {
-    data.email = 'Please enter your email'
+  if (isEmpty(data.email)) {
+    errors.email = 'Please enter your email'
   }
 
-  if (isEmpty(user.password)) {
-    data.password = 'Please enter your password'
+  if (isEmpty(data.password)) {
+    errors.password = 'Please enter your password'
   }
 
   return {

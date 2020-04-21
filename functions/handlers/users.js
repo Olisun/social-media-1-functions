@@ -106,8 +106,19 @@ exports.login = (request, response) => {
 }
 
 // Adding user details. 
-exports.addUserDetails = (request, resposne) => {
+exports.addUserDetails = (request, response) => {
+  let userDetails = reduceUserDetails(request.body);
 
+  return database
+    .doc(`/users/${request.user.handle}`)
+    .update(userDetails)
+    .then(() => {
+      return response.json({ message: 'Details added successfully' });
+    })
+    .catch(error => {
+      console.error(error);
+      return response.status(500).json({ error: error.code });
+    })
 }
 
 // Upload image route function. 
