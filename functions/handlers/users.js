@@ -4,7 +4,7 @@ const config = require('../util/config');
 const firebase = require('firebase');
 firebase.initializeApp(config);
 
-const { validateSignupData, validateLoginData } = require('../util/validators');
+const { validateSignupData, validateLoginData, reduceUserDetails } = require('../util/validators');
 
 // signup route function. 
 exports.signup = (request, response) => {
@@ -105,7 +105,12 @@ exports.login = (request, response) => {
     });
 }
 
-// upload image route function. 
+// Adding user details. 
+exports.addUserDetails = (request, resposne) => {
+
+}
+
+// Upload image route function. 
 exports.uploadImage = (request, response) => {
   // importing packages (BusBoy installed.  Others default.)
   const BusBoy = require('busboy');
@@ -123,6 +128,10 @@ exports.uploadImage = (request, response) => {
     console.log(fieldname);
     console.log(filename);
     console.log(mimetype);
+    // Restricting image upload types to png and jpeg only. 
+    if (mimetype !== 'image/jpeg' && mimetype !== 'image/png') {
+      return response.status(400).json({ error: 'Wrong file type submitted' });
+    }
     // Extracting the filename (.png for example).
     // The array part gives us the index of the last item. 
     const imageExtention = filename.split('.')[filename.split('.').length - 1];
@@ -133,7 +142,7 @@ exports.uploadImage = (request, response) => {
     // Creating image to be uploaded. 
     imageToBeUploaded = { filepath, mimetype };
     // Using fs lib to create the file.
-    file.pipe(fs.createWriteStream(filepath));
+    return file.pipe(fs.createWriteStream(filepath));
   });
   busboy.on('finish', () => {
     // From firebase SDK docs per tut.  
@@ -164,5 +173,6 @@ exports.uploadImage = (request, response) => {
         return response.status(500).json({ error: error.code });
       })
   })
+  busboy.end(request.rawBody);
 }
 

@@ -7,9 +7,9 @@ const app = require('express')();
 // importing FBAuth helper.
 const FBAuth = require('./util/fbAuth');
 
-// importing the posts handler functions. 
+// importing the handler functions. 
 const { getAllPosts, createPost } = require('./handlers/posts');
-const { signup, login, uploadImage } = require('./handlers/users');
+const { signup, login, uploadImage, addUserDetails } = require('./handlers/users');
 
 // Routes for posts using handler functions. 
 app.get('/posts', getAllPosts);
@@ -19,6 +19,7 @@ app.post('/posts', FBAuth, createPost);
 app.post('/signup', signup);
 app.post('/login', login);
 app.post('/user/image', FBAuth, uploadImage);
+app.post('/user', FBAuth, addUserDetails);
 
 
 // passing the app into the function so it turns into multiple routes.
