@@ -121,6 +121,37 @@ exports.addUserDetails = (request, response) => {
     })
 }
 
+// Getting your own user details. 
+exports.getAuthenticatedUser = (request, response) => {
+  let userData = {};
+
+  return database
+    .doc(`/users/${request.user.handle}`)
+    .get()
+    .then(doc => {
+      if (doc.exists) {
+        userData.credentials = doc.data();
+        return database
+          .collection('likes')
+          .where('userHandle', '==', request.user.handle)
+          .get()
+      } else {
+        return response.status(404).json({ error: 'User not found' });
+      }
+    })
+    .then(data => {
+      userData.likes = [];
+      data.forEach(doc => {
+        userData.likes.push(doc.data());
+      });
+      return response.json(userData);
+    })
+    .catch(error => {
+      console.error(error);
+      return response.status(500).json({ error: error.code });
+    })
+}
+
 // Upload image route function. 
 exports.uploadImage = (request, response) => {
   // importing packages (BusBoy installed.  Others default.)

@@ -20,4 +20,28 @@ let db = {
       commentCount: 2
     }
   ]
+};
+
+const userDetails = {
+  // Redux data
+  credentials: {
+    userId: 'N43KJ5H43KJHREW4J5H3JWMERHB',
+    email: 'user@mac.com',
+    handle: 'user',
+    createdAt: '2019-03-15T10:59:52.798Z',
+    imageUrl: 'image/dsfsdkfghskdfgs/dgfdhfgdh',
+    bio: 'This is my bio.',
+    website: 'https://user.com',
+    location: 'San Francisco, CA'
+  },
+  likes: [
+    {
+      userHandle: 'user',
+      postId: 'hh7O5oWfWucVzGbHH2pa'
+    },
+    {
+      useHandle: 'user',
+      postId: '3IOnFoQexRcofs5OhBXO'
+    }
+  ]
 }

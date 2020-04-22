@@ -65,6 +65,7 @@ exports.validateLoginData = data => {
   }
 }
 
+// Adding bio, website & location to user details. 
 exports.reduceUserDetails = data => {
   let userDetails = {};
 
