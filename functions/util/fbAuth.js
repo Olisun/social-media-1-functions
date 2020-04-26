@@ -26,6 +26,7 @@ module.exports = (request, response, next) => {
     // getting the user data from the database doc to send along with the request. 
     .then(data => {
       request.user.handle = data.docs[0].data().handle;
+      request.user.imageUrl = data.docs[0].data().imageUrl;
       // next() will allow the request to proceed. 
       return next();
     })

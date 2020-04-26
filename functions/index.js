@@ -8,7 +8,15 @@ const app = require('express')();
 const FBAuth = require('./util/fbAuth');
 
 // importing the handler functions. 
-const { getAllPosts, createPost, getPost } = require('./handlers/posts');
+const {
+  getAllPosts,
+  createPost,
+  getPost,
+  commentOnPost,
+  likePost,
+  unlikePost
+} = require('./handlers/posts');
+
 const {
   signup,
   login,
@@ -22,9 +30,9 @@ app.get('/posts', getAllPosts);
 app.post('/posts', FBAuth, createPost);
 app.get('/posts/:postId', getPost); // getting details of one post. 
 // TODO: delete post
-// TODO: like a post
-// TODO: unlike a post
-// TODO: comment on a post
+app.get('/posts/:postId/like', FBAuth, likePost);
+app.get('/posts/:postId/unlike', FBAuth, unlikePost);
+app.post('posts/:postId/comment', FBAuth, commentOnPost);
 
 // Login and Signup routes with the help of handler functions. 
 app.post('/signup', signup);

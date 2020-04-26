@@ -26,20 +26,25 @@ exports.getAllPosts = (request, response) => {
   // });
 };
 
-// route for creating a post. 
+// Route for creating a post. 
 exports.createPost = (request, response) => {
   // cors(request, response, () => {
   const newPost = {
     body: request.body.body,
     userHandle: request.user.handle,
-    createdAt: new Date().toISOString()
+    userImage: request.user.imageUrl,
+    createdAt: new Date().toISOString(),
+    likeCount: 0,
+    commentCount: 0
   };
   return database
     .collection('posts')
     .add(newPost)
     .then(doc => {
-      response.json({ message: `document ${doc.id} created successfully` });
-      return response.json(newPost);
+      // Returning the post ID in the response. 
+      const responsePost = newPost;
+      responsePost.postId = doc.id;
+      return response.json(responsePost);
     })
     .catch(error => {
       response.status(500).json({ error: 'Oops - something went wrong!' });
@@ -48,6 +53,7 @@ exports.createPost = (request, response) => {
   // });
 };
 
+// Route for getting one post. 
 exports.getPost = (request, response) => {
   let postData = {};
 
@@ -80,3 +86,94 @@ exports.getPost = (request, response) => {
       console.log(error);
     });
 };
+
+exports.commentOnPost = (request, response) => {
+  //Validation for empty comments. 
+  if (request.body.body.trim() === '') {
+    return response.status(400).json({ error: 'Comment must not be empty' });
+  }
+
+  const newComment = {
+    body: request.body.body,
+    createdAt: new Date().toISOString(),
+    postId: request.params.postId,
+    userHandle: request.user.handle,
+    userImage: request.user.imageUrl
+  };
+  console.log(newComment);
+
+  return database
+    .doc(`/posts/${request.params.postId}`)
+    .get()
+    .then(doc => {
+      if (!doc.exists) {
+        return response.status(404).json({ error: 'Post not found' });
+      }
+      return doc.ref.update({ commentCount: doc.data().commentCount + 1 });
+    })
+    .then(() => {
+      return database
+        .collection('comments')
+        .add(newComment);
+    })
+    .then(doc => {
+      response.json({ message: `document ${doc.id} created successfully` });
+      return response.json(newComment);
+    })
+    .catch(error => {
+      response.status(500).json({ error: 'Debugging Time' });
+      console.log(error);
+    });
+}
+
+// Like a post. 
+exports.likePost = (request, response) => {
+  const likeDocument = database
+    .collection('likes')
+    .where('userHandle', '==', request.user.handle)
+    .where('postId', '==', request.params.postId)
+    .limit(1);
+
+  const postDocument = database.doc(`/posts/${request.params.postId}`);
+
+  let postData
+
+  // Checking to make sure post exists. 
+  return postDocument
+    .get()
+    .then(doc => {
+      if (doc.exists) {
+        postData = doc.data();
+        postData.postId = doc.id;
+        return likeDocument.get();
+      } else {
+        return response.status(404).json({ error: 'Post not found' });
+      }
+    })
+    .then(data => {
+      if (data.empty) {
+        return database
+          .add({
+            postId: request.params.postId,
+            userHandle: request.user.handle
+          })
+          .then(() => {
+            postData.likeCount++
+            return postDocument.update({ likeCount: postData.likeCount })
+          })
+          .then(() => {
+            return response.json(postData)
+          })
+      } else {
+        return response.status(400).json({ error: 'You already liked this' });
+      }
+    })
+    .catch(error => {
+      console.error(error);
+      response.status(500).json({ error: error.code })
+    })
+}
+
+exports.unlikePost = (request, response) => {
+
+}
